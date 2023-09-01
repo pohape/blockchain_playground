@@ -30,6 +30,25 @@ def get_last_blockchain_value():
     return blockchain[-1]
 
 
+def verify_chain():
+    index = 0
+
+    for block in blockchain:
+        if index >= 1:
+            # print()
+            # print("Check start for index " + str(index))
+            # print(block[0])
+            # print(blockchain[index - 1])
+            # print("Check end")
+            # print()
+
+            if block[0] != blockchain[index - 1]:
+                return False
+        index += 1
+
+    return True
+
+
 while True:
     print("Please choose")
     print("1: Add a new transaction")
@@ -53,6 +72,10 @@ while True:
         print("Input was invalid")
 
     print("Choice registered")
+
+    if not verify_chain():
+        print("The Chain is invalid!")
+        break
 
 
 print("Done!")
