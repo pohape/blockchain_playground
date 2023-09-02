@@ -31,19 +31,11 @@ def get_last_blockchain_value():
 
 
 def verify_chain():
-    index = 0
-
-    for block in blockchain:
-        if index >= 1:
-            # print()
-            # print("Check start for index " + str(index))
-            # print(block[0])
-            # print(blockchain[index - 1])
-            # print("Check end")
-            # print()
-
-            if block[0] != blockchain[index - 1]:
-                return False
+    for index in range(len(blockchain)):
+        if index == 0:
+            continue
+        elif blockchain[index][0] != blockchain[index - 1]:
+            return False
         index += 1
 
     return True
