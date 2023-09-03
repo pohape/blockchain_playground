@@ -7,6 +7,7 @@ genesis_block = {
 blockchain = [genesis_block]
 open_transactions = []
 owner = "Max"
+participants = {owner}
 
 
 def hash_block(block):
@@ -30,14 +31,15 @@ def mine_block():
     }
 
     blockchain.append(block)
-    # open_transactions = []
+
+    return True
 
 
 def get_transaction_value():
-    tx_recepient = input("Enter the recipient: ")
-    tx_amount = input("Enter the amount: ")
+    tx_recipient = input("Enter the recipient: ")
+    tx_amount = float(input("Enter the amount: "))
 
-    return (tx_recepient, tx_amount)
+    return (tx_recipient, tx_amount)
 
 
 def get_user_choise():
@@ -59,7 +61,6 @@ def get_last_blockchain_value():
 
 def verify_chain():
     for index, block in enumerate(blockchain):
-        print(block)
         if index == 0:
             continue
         elif block["previous_hash"] != hash_block(blockchain[index - 1]):
@@ -68,26 +69,44 @@ def verify_chain():
     return True
 
 
+def get_balance(participant):
+    amount_sent = 0
+    amount_received = 0
+
+    for block in blockchain:
+        for transaction in block["transactions"]:
+            print(transaction)
+            if transaction["sender"] == participant:
+                amount_sent += transaction["amount"]
+            elif transaction["recipient"] == participant:
+                amount_received += transaction["amount"]
+
+    return amount_received - amount_sent
+
+
 while True:
     print("Please choose")
     print("1: Add a new transaction")
     print("2: Mine a new block")
     print("3: Output the blockchain blocks")
+    print("4: Show participants")
     print("h: Manipulate the chain")
     print("q: Quit")
 
     user_choice = get_user_choise()
 
     if user_choice == "1":
-        tx_data = get_transaction_value()
-        recipient, amount = tx_data
+        recipient, amount = get_transaction_value()
 
         add_transaction(recipient, amount=amount)
-        print(open_transactions)
+        participants.add(recipient)
     elif user_choice == "2":
-        mine_block()
+        if mine_block():
+            open_transactions = []
     elif user_choice == "3":
         print_blockchain_elements()
+    elif user_choice == "4":
+        print(participants)
     elif user_choice == "q":
         break
     elif user_choice == "h":
@@ -101,6 +120,7 @@ while True:
         print("Input was invalid")
 
     print("Choice registered")
+    print("Balance is " + str(get_balance("Max")))
 
     if not verify_chain():
         print("The Chain is invalid!")
