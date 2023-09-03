@@ -1,6 +1,16 @@
-blockchain = []
+genesis_block = {
+    "previous_hash": "",
+    "index": 0,
+    "transactions": [],
+}
+
+blockchain = [genesis_block]
 open_transactions = []
 owner = "Max"
+
+
+def hash_block(block):
+    return "-".join([str(block[key]) for key in block])
 
 
 def add_transaction(recipient, sender=owner, amount=1.0):
@@ -10,7 +20,17 @@ def add_transaction(recipient, sender=owner, amount=1.0):
 
 
 def mine_block():
-    pass
+    last_block = blockchain[-1]
+    hashed_block = hash_block(last_block)
+
+    block = {
+        "previous_hash": hashed_block,
+        "index": len(blockchain),
+        "transactions": open_transactions,
+    }
+
+    blockchain.append(block)
+    # open_transactions = []
 
 
 def get_transaction_value():
@@ -38,12 +58,12 @@ def get_last_blockchain_value():
 
 
 def verify_chain():
-    for index in range(len(blockchain)):
+    for index, block in enumerate(blockchain):
+        print(block)
         if index == 0:
             continue
-        elif blockchain[index][0] != blockchain[index - 1]:
+        elif block["previous_hash"] != hash_block(blockchain[index - 1]):
             return False
-        index += 1
 
     return True
 
@@ -51,7 +71,8 @@ def verify_chain():
 while True:
     print("Please choose")
     print("1: Add a new transaction")
-    print("2: Output the blockchain blocks")
+    print("2: Mine a new block")
+    print("3: Output the blockchain blocks")
     print("h: Manipulate the chain")
     print("q: Quit")
 
@@ -64,12 +85,18 @@ while True:
         add_transaction(recipient, amount=amount)
         print(open_transactions)
     elif user_choice == "2":
+        mine_block()
+    elif user_choice == "3":
         print_blockchain_elements()
     elif user_choice == "q":
         break
     elif user_choice == "h":
         if len(blockchain) >= 1:
-            blockchain[0] = [666]
+            blockchain[0] = {
+                "previous_hash": "",
+                "index": 0,
+                "transactions": [{"sender": "Max", "recipient": "Chris", "amount": 1}],
+            }
     else:
         print("Input was invalid")
 
