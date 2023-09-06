@@ -1,3 +1,6 @@
+import hashlib
+import json
+
 MINING_REWARD = 10
 
 genesis_block = {
@@ -13,7 +16,7 @@ participants = {owner}
 
 
 def hash_block(block):
-    return "-".join([str(block[key]) for key in block])
+    return hashlib.sha256(json.dumps(block).encode()).hexdigest()
 
 
 def add_transaction(recipient, sender=owner, amount=1.0):
