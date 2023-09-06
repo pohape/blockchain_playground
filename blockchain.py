@@ -159,7 +159,7 @@ while True:
         print("Input was invalid")
 
     print("Choice registered")
-    print("Balance is " + str(get_balance("Max")))
+    print("Balance of {} is {:.2f}".format(owner, get_balance(owner)))
 
     if not verify_chain():
         print("The Chain is invalid!")
