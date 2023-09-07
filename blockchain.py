@@ -7,6 +7,7 @@ genesis_block = {
     "previous_hash": "",
     "index": 0,
     "transactions": [],
+    "proof": 100,
 }
 
 blockchain = [genesis_block]
@@ -17,6 +18,25 @@ participants = {owner}
 
 def hash_block(block):
     return hashlib.sha256(json.dumps(block).encode()).hexdigest()
+
+
+def valid_proof(transactions, last_hash, proof):
+    guess = (str(transactions) + str(last_hash) + str(proof)).encode()
+    guess_hash = hashlib.sha256(guess).hexdigest()
+    print(guess_hash)
+
+    return guess_hash[0:2] == "00"
+
+
+def proof_of_work():
+    last_block = blockchain[-1]
+    last_hash = hash_block(last_block)
+    proof = 0
+
+    while not valid_proof(open_transactions, last_hash, proof):
+        proof += 1
+
+    return proof
 
 
 def add_transaction(recipient, sender=owner, amount=1.0):
@@ -35,6 +55,7 @@ def add_transaction(recipient, sender=owner, amount=1.0):
 def mine_block():
     last_block = blockchain[-1]
     hashed_block = hash_block(last_block)
+    proof = proof_of_work()
 
     reward_transaction = {
         "sender": "MINING",
@@ -49,6 +70,7 @@ def mine_block():
         "previous_hash": hashed_block,
         "index": len(blockchain),
         "transactions": copied_transactions,
+        "proof": proof,
     }
 
     blockchain.append(block)
@@ -91,6 +113,10 @@ def verify_chain():
         if index == 0:
             continue
         elif block["previous_hash"] != hash_block(blockchain[index - 1]):
+            return False
+        elif not valid_proof(
+            block["transactions"][:-1], block["previous_hash"], block["proof"]
+        ):
             return False
 
     return True
