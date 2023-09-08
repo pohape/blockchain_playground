@@ -1,5 +1,7 @@
 from collections import OrderedDict
 import hash_util
+import json
+import os
 
 MINING_REWARD = 10
 
@@ -10,10 +12,60 @@ genesis_block = {
     "proof": 100,
 }
 
-blockchain = [genesis_block]
-open_transactions = []
 owner = "Max"
 participants = {owner}
+
+
+def load_data():
+    if not os.path.isfile("blockchain.txt"):
+        return False
+
+    with open("blockchain.txt", mode="r") as f:
+        file_content = f.readlines()
+        global blockchain
+        global open_transactions
+
+        blockchain_invalid = json.loads(file_content[0][:-1])
+        blockchain = []
+
+        for block in blockchain_invalid:
+            transactions = []
+
+            for transaction in block["transactions"]:
+                transactions.append(
+                    OrderedDict(
+                        [
+                            ("sender", transaction["sender"]),
+                            ("recipient", transaction["recipient"]),
+                            ("amount", transaction["amount"]),
+                        ]
+                    )
+                )
+
+            blockchain.append(
+                {
+                    "previous_hash": block["previous_hash"],
+                    "index": block["index"],
+                    "proof": block["proof"],
+                    "transactions": transactions,
+                }
+            )
+
+        open_transactions_invalid = json.loads(file_content[1])
+        open_transactions = []
+
+        for transaction in open_transactions_invalid:
+            open_transactions.append(
+                OrderedDict(
+                    [
+                        ("sender", transaction["sender"]),
+                        ("recipient", transaction["recipient"]),
+                        ("amount", transaction["amount"]),
+                    ]
+                )
+            )
+
+        return True
 
 
 def valid_proof(transactions, last_hash, proof):
@@ -41,6 +93,8 @@ def add_transaction(recipient, sender=owner, amount=1.0):
 
     if verify_transaction(transaction):
         open_transactions.append(transaction)
+        save_data()
+
         participants.add(sender)
         participants.add(recipient)
 
@@ -139,7 +193,19 @@ def verify_transactions():
     return all([verify_transaction(tx) for tx in open_transactions])
 
 
+def save_data():
+    with open("blockchain.txt", mode="w") as f:
+        f.write(json.dumps(blockchain))
+        f.write("\n")
+        f.write(json.dumps(open_transactions))
+
+
+if not load_data():
+    blockchain = [genesis_block]
+    open_transactions = []
+
 while True:
+    print("Balance of {} is {:.2f}".format(owner, get_balance(owner)))
     print("Please choose")
     print("1: Add a new transaction")
     print("2: Mine a new block")
@@ -161,6 +227,7 @@ while True:
     elif user_choice == "2":
         if mine_block():
             open_transactions = []
+            save_data()
     elif user_choice == "3":
         print_blockchain_elements()
     elif user_choice == "4":
@@ -183,7 +250,6 @@ while True:
         print("Input was invalid")
 
     print("Choice registered")
-    print("Balance of {} is {:.2f}".format(owner, get_balance(owner)))
 
     if not verify_chain():
         print("The Chain is invalid!")
