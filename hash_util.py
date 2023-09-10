@@ -17,7 +17,7 @@ def transactions_dict(transactions):
 
 def json_dump_block(block):
     block_dict = block.__dict__.copy()
-    block_dict["transactions"] = transactions_dict(block.transactions)
+    block_dict["transactions"] = [tx.to_ordered_dict() for tx in block.transactions]
     block_dict["time"] = None
 
     return json_dump(block_dict)

@@ -9,7 +9,6 @@ MINING_REWARD = 10
 
 genesis_block = Block(0, "", [], 100, 0)
 owner = "Max"
-participants = {owner}
 
 
 def load_data():
@@ -62,7 +61,7 @@ def load_data():
 
 
 def valid_proof(transactions, last_hash, proof):
-    transactions_str = str(hash_util.transactions_dict(transactions))
+    transactions_str = str([tx.to_ordered_dict() for tx in transactions])
     guess = (transactions_str + str(last_hash) + str(proof)).encode()
     guess_hash = hash_util.hash_string_256(guess)
 
@@ -86,9 +85,6 @@ def add_transaction(recipient, sender=owner, amount=1.0):
     if verify_transaction(transaction):
         open_transactions.append(transaction)
         save_data()
-
-        participants.add(sender)
-        participants.add(recipient)
 
         return True
 
@@ -210,9 +206,8 @@ while True:
     print("Please choose")
     print("1: Add a new transaction")
     print("2: Mine a new block")
-    print("3: Output the blockchain blocks")
-    print("4: Show participants")
-    print("5: Verify transactions")
+    print("3: Show participants")
+    print("4: Verify transactions")
     print("q: Quit")
 
     user_choice = get_user_choise()
@@ -231,8 +226,6 @@ while True:
     elif user_choice == "3":
         print_blockchain_elements()
     elif user_choice == "4":
-        print(participants)
-    elif user_choice == "5":
         if verify_transactions():
             print("All transactions are valid")
         else:
