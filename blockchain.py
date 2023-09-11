@@ -1,216 +1,153 @@
 from verification import Verification
-from block import Block
+from node import Node
 from transaction import Transaction
+from block import Block
 import hash_util
 import json
 import os
 
 MINING_REWARD = 10
 
-genesis_block = Block(0, "", [], 100, 0)
-owner = "Max"
-verification = Verification()
 
+class Blockchain:
+    def __init__(self) -> None:
+        self.chain = [Block(0, "", [], 100, 0)]
+        self.open_transactions = []
+        self.load_data()
 
-def load_data():
-    if not os.path.isfile("blockchain.txt"):
-        return False
+    def load_data(self):
+        if not os.path.isfile("blockchain.txt"):
+            return False
 
-    with open("blockchain.txt", mode="r") as f:
-        file_content = f.readlines()
-        global blockchain
-        global open_transactions
+        with open("blockchain.txt", mode="r") as f:
+            file_content = f.readlines()
 
-        blockchain_invalid = json.loads(file_content[0][:-1])
-        blockchain = []
+            blockchain_invalid = json.loads(file_content[0][:-1])
+            self.chain = []
 
-        for block_invalid in blockchain_invalid:
-            transactions = []
+            for block_invalid in blockchain_invalid:
+                transactions = []
 
-            for transaction_invalid in block_invalid["transactions"]:
-                transactions.append(
+                for transaction_invalid in block_invalid["transactions"]:
+                    transactions.append(
+                        Transaction(
+                            transaction_invalid["sender"],
+                            transaction_invalid["recipient"],
+                            transaction_invalid["amount"],
+                        )
+                    )
+
+                self.chain.append(
+                    Block(
+                        block_invalid["index"],
+                        block_invalid["previous_hash"],
+                        transactions,
+                        block_invalid["proof"]
+                        # block_invalid['timestamp']
+                    )
+                )
+
+            open_transactions_invalid = json.loads(file_content[1])
+            self.open_transactions = []
+
+            for transaction_invalid in open_transactions_invalid:
+                self.open_transactions.append(
                     Transaction(
                         transaction_invalid["sender"],
                         transaction_invalid["recipient"],
                         transaction_invalid["amount"],
-                    )
+                    ),
                 )
 
-            blockchain.append(
-                Block(
-                    block_invalid["index"],
-                    block_invalid["previous_hash"],
-                    transactions,
-                    block_invalid["proof"]
-                    # block_invalid['timestamp']
-                )
-            )
+            return True
 
-        open_transactions_invalid = json.loads(file_content[1])
-        open_transactions = []
+    def save_data(self):
+        blockchain_dict = []
+        open_transactions_dict = []
 
-        for transaction_invalid in open_transactions_invalid:
-            open_transactions.append(
-                Transaction(
-                    transaction_invalid["sender"],
-                    transaction_invalid["recipient"],
-                    transaction_invalid["amount"],
-                ),
-            )
+        for block in self.chain:
+            transactions_dict = []
 
-        return True
+            for transaction in block.transactions:
+                transactions_dict.append(transaction.__dict__.copy())
 
+            block_dict = block.__dict__.copy()
+            block_dict["transactions"] = transactions_dict
 
-def proof_of_work():
-    last_block = blockchain[-1]
-    last_hash = hash_util.hash_block(last_block)
-    proof = 0
+            blockchain_dict.append(block_dict)
 
-    while not verification.valid_proof(open_transactions, last_hash, proof):
-        proof += 1
+        for transaction in self.open_transactions:
+            open_transactions_dict.append(transaction.__dict__.copy())
 
-    return proof
+        try:
+            with open("blockchain.txt", mode="w") as f:
+                f.write(json.dumps(blockchain_dict))
+                f.write("\n")
+                f.write(json.dumps(open_transactions_dict))
+        except IOError:
+            print("Saving failed!")
+            quit()
 
+    def proof_of_work(self):
+        last_block = self.chain[-1]
+        last_hash = hash_util.hash_block(last_block)
+        proof = 0
 
-def add_transaction(recipient, sender=owner, amount=1.0):
-    transaction = Transaction(sender, recipient, amount)
+        while not verification.valid_proof(self.open_transactions, last_hash, proof):
+            proof += 1
 
-    if verification.verify_transaction(transaction, get_balance):
-        open_transactions.append(transaction)
-        save_data()
+        return proof
 
-        return True
+    def get_balance(self, participant):
+        amount_sent = 0
+        amount_received = 0
 
-    return False
+        for block in self.chain:
+            for transaction in block.transactions:
+                if transaction.sender == participant:
+                    amount_sent += transaction.amount
+                elif transaction.recipient == participant:
+                    amount_received += transaction.amount
 
-
-def mine_block():
-    last_block = blockchain[-1]
-    hashed_block = hash_util.hash_block(last_block)
-    proof = proof_of_work()
-
-    copied_transactions = open_transactions[:]
-    copied_transactions.append(Transaction("MINING", owner, MINING_REWARD))
-
-    block = Block(len(blockchain), hashed_block, copied_transactions, proof)
-    blockchain.append(block)
-
-    return True
-
-
-def get_transaction_value():
-    tx_recipient = input("Enter the recipient: ")
-    tx_amount = float(input("Enter the amount: "))
-
-    return (tx_recipient, tx_amount)
-
-
-def get_user_choise():
-    return input("Your choice: ")
-
-
-def print_blockchain_elements():
-    for block in blockchain:
-        print("Outputing Block")
-        print(block)
-
-
-def get_last_blockchain_value():
-    if len(blockchain) < 1:
-        return None
-
-    return blockchain[-1]
-
-
-def get_balance(participant):
-    amount_sent = 0
-    amount_received = 0
-
-    for block in blockchain:
-        for transaction in block.transactions:
+        for transaction in self.open_transactions:
             if transaction.sender == participant:
                 amount_sent += transaction.amount
-            elif transaction.recipient == participant:
-                amount_received += transaction.amount
 
-    for transaction in open_transactions:
-        if transaction.sender == participant:
-            amount_sent += transaction.amount
+        return amount_received - amount_sent
 
-    return amount_received - amount_sent
+    def get_last_blockchain_value(self):
+        if len(self.chain) < 1:
+            return None
 
+        return self.chain[-1]
 
-def save_data():
-    blockchain_dict = []
-    open_transactions_dict = []
+    def add_transaction(self, recipient, sender, amount=1.0):
+        transaction = Transaction(sender, recipient, amount)
 
-    for block in blockchain:
-        transactions_dict = []
+        if verification.verify_transaction(transaction, self.get_balance):
+            self.open_transactions.append(transaction)
+            self.save_data()
 
-        for transaction in block.transactions:
-            transactions_dict.append(transaction.__dict__.copy())
+            return True
 
-        block_dict = block.__dict__.copy()
-        block_dict["transactions"] = transactions_dict
+        return False
 
-        blockchain_dict.append(block_dict)
+    def mine_block(self, node):
+        last_block = self.chain[-1]
+        hashed_block = hash_util.hash_block(last_block)
+        proof = self.proof_of_work()
 
-    for transaction in open_transactions:
-        open_transactions_dict.append(transaction.__dict__.copy())
+        copied_transactions = self.open_transactions[:]
+        copied_transactions.append(Transaction("MINING", node, MINING_REWARD))
 
-    try:
-        with open("blockchain.txt", mode="w") as f:
-            f.write(json.dumps(blockchain_dict))
-            f.write("\n")
-            f.write(json.dumps(open_transactions_dict))
-    except IOError:
-        print("Saving failed!")
-        quit()
+        block = Block(len(self.chain), hashed_block, copied_transactions, proof)
+        self.chain.append(block)
+
+        return True
 
 
-if not load_data():
-    blockchain = [genesis_block]
-    open_transactions = []
-
-while True:
-    print("Balance of {} is {:.2f}".format(owner, get_balance(owner)))
-    print("Please choose")
-    print("1: Add a new transaction")
-    print("2: Mine a new block")
-    print("3: Show participants")
-    print("4: Verify transactions")
-    print("q: Quit")
-
-    user_choice = get_user_choise()
-
-    if user_choice == "1":
-        recipient, amount = get_transaction_value()
-
-        if add_transaction(recipient, amount=amount):
-            print("Transaction completed!")
-        else:
-            print("Transaction FAILED!")
-    elif user_choice == "2":
-        if mine_block():
-            open_transactions = []
-            save_data()
-    elif user_choice == "3":
-        print_blockchain_elements()
-    elif user_choice == "4":
-        if verification.verify_transactions(open_transactions, get_balance):
-            print("All transactions are valid")
-        else:
-            print("There are invalid transactions")
-    elif user_choice == "q":
-        break
-    else:
-        print("Input was invalid")
-
-    print("Choice registered")
-
-    if not verification.verify_chain(blockchain):
-        print("The Chain is invalid!")
-        break
+verification = Verification()
+node = Node()
 
 
-print("Done!")
+node.listen_for_input()
