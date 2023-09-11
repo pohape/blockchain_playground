@@ -1,5 +1,6 @@
 from verification import Verification
-from node import Node
+
+# from node import Node
 from transaction import Transaction
 from block import Block
 import hash_util
@@ -10,10 +11,11 @@ MINING_REWARD = 10
 
 
 class Blockchain:
-    def __init__(self) -> None:
+    def __init__(self, hosting_node_id) -> None:
         self.chain = [Block(0, "", [], 100, 0)]
         self.open_transactions = []
         self.load_data()
+        self.hosting_node = hosting_node_id
 
     def load_data(self):
         if not os.path.isfile("blockchain.txt"):
@@ -92,15 +94,19 @@ class Blockchain:
         last_block = self.chain[-1]
         last_hash = hash_util.hash_block(last_block)
         proof = 0
+        verification = Verification()
 
         while not verification.valid_proof(self.open_transactions, last_hash, proof):
             proof += 1
 
         return proof
 
-    def get_balance(self, participant):
+    def get_balance(self):
         amount_sent = 0
         amount_received = 0
+        participant = self.hosting_node
+
+        print(self.chain)
 
         for block in self.chain:
             for transaction in block.transactions:
@@ -123,6 +129,7 @@ class Blockchain:
 
     def add_transaction(self, recipient, sender, amount=1.0):
         transaction = Transaction(sender, recipient, amount)
+        verification = Verification()
 
         if verification.verify_transaction(transaction, self.get_balance):
             self.open_transactions.append(transaction)
@@ -132,22 +139,20 @@ class Blockchain:
 
         return False
 
-    def mine_block(self, node):
+    def mine_block(self):
         last_block = self.chain[-1]
         hashed_block = hash_util.hash_block(last_block)
         proof = self.proof_of_work()
 
         copied_transactions = self.open_transactions[:]
-        copied_transactions.append(Transaction("MINING", node, MINING_REWARD))
+        copied_transactions.append(
+            Transaction("MINING", self.hosting_node, MINING_REWARD)
+        )
 
         block = Block(len(self.chain), hashed_block, copied_transactions, proof)
         self.chain.append(block)
 
+        self.open_transactions = []
+        self.save_data()
+
         return True
-
-
-verification = Verification()
-node = Node()
-
-
-node.listen_for_input()

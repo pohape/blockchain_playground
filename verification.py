@@ -3,7 +3,7 @@ import hash_util
 
 class Verification:
     def verify_transaction(self, transaction, get_balance):
-        sender_balance = get_balance(transaction.sender)
+        sender_balance = get_balance()
 
         return sender_balance >= transaction.amount
 
@@ -13,10 +13,12 @@ class Verification:
         )
 
     def verify_chain(self, blockchain):
-        for index, block in enumerate(blockchain):
+        for index, block in enumerate(blockchain.chain):
             if index == 0:
                 continue
-            elif block.previous_hash != hash_util.hash_block(blockchain[index - 1]):
+            elif block.previous_hash != hash_util.hash_block(
+                blockchain.chain[index - 1]
+            ):
                 return False
             elif not self.valid_proof(
                 block.transactions[:-1], block.previous_hash, block.proof
