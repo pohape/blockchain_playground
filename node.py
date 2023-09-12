@@ -36,7 +36,7 @@ class Node:
                 self.print_blockchain_elements()
             elif user_choice == "4":
                 if Verification.verify_transactions(
-                    self.blockchain.open_transactions, self.blockchain.get_balance
+                    self.blockchain.get_open_transactions(), self.blockchain.get_balance
                 ):
                     print("All transactions are valid")
                 else:
@@ -62,7 +62,7 @@ class Node:
         return input("Your choice: ")
 
     def print_blockchain_elements(self):
-        for block in self.blockchain.chain:
+        for block in self.blockchain.get_chain():
             print("Outputing Block")
             print(block)
         else:

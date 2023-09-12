@@ -15,11 +15,11 @@ class Verification:
 
     @classmethod
     def verify_chain(cls, blockchain):
-        for index, block in enumerate(blockchain.chain):
+        for index, block in enumerate(blockchain.get_chain()):
             if index == 0:
                 continue
             elif block.previous_hash != hash_util.hash_block(
-                blockchain.chain[index - 1]
+                blockchain.get_chain()[index - 1]
             ):
                 return False
             elif not cls.valid_proof(
