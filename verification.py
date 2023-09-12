@@ -2,17 +2,19 @@ import hash_util
 
 
 class Verification:
-    def verify_transaction(self, transaction, get_balance):
+    @staticmethod
+    def verify_transaction(transaction, get_balance):
         sender_balance = get_balance()
 
         return sender_balance >= transaction.amount
 
-    def verify_transactions(self, open_transactions, get_balance):
+    def verify_transactions(cls, open_transactions, get_balance):
         return all(
-            [self.verify_transaction(tx, get_balance) for tx in open_transactions]
+            [cls.verify_transaction(tx, get_balance) for tx in open_transactions]
         )
 
-    def verify_chain(self, blockchain):
+    @classmethod
+    def verify_chain(cls, blockchain):
         for index, block in enumerate(blockchain.chain):
             if index == 0:
                 continue
@@ -20,14 +22,15 @@ class Verification:
                 blockchain.chain[index - 1]
             ):
                 return False
-            elif not self.valid_proof(
+            elif not cls.valid_proof(
                 block.transactions[:-1], block.previous_hash, block.proof
             ):
                 return False
 
         return True
 
-    def valid_proof(self, transactions, last_hash, proof):
+    @staticmethod
+    def valid_proof(transactions, last_hash, proof):
         transactions_str = str([tx.to_ordered_dict() for tx in transactions])
         guess = (transactions_str + str(last_hash) + str(proof)).encode()
         guess_hash = hash_util.hash_string_256(guess)

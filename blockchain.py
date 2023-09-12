@@ -94,9 +94,8 @@ class Blockchain:
         last_block = self.chain[-1]
         last_hash = hash_util.hash_block(last_block)
         proof = 0
-        verification = Verification()
 
-        while not verification.valid_proof(self.open_transactions, last_hash, proof):
+        while not Verification.valid_proof(self.open_transactions, last_hash, proof):
             proof += 1
 
         return proof
@@ -105,8 +104,6 @@ class Blockchain:
         amount_sent = 0
         amount_received = 0
         participant = self.hosting_node
-
-        print(self.chain)
 
         for block in self.chain:
             for transaction in block.transactions:
@@ -129,9 +126,8 @@ class Blockchain:
 
     def add_transaction(self, recipient, sender, amount=1.0):
         transaction = Transaction(sender, recipient, amount)
-        verification = Verification()
 
-        if verification.verify_transaction(transaction, self.get_balance):
+        if Verification.verify_transaction(transaction, self.get_balance):
             self.open_transactions.append(transaction)
             self.save_data()
 
