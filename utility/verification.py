@@ -1,4 +1,4 @@
-import hash_util
+from utility.hash_util import hash_string_256, hash_block
 
 
 class Verification:
@@ -8,9 +8,13 @@ class Verification:
 
         return sender_balance >= transaction.amount
 
-    def verify_transactions(cls, open_transactions, get_balance):
+    @staticmethod
+    def verify_transactions(open_transactions, get_balance):
         return all(
-            [cls.verify_transaction(tx, get_balance) for tx in open_transactions]
+            [
+                Verification.verify_transaction(tx, get_balance)
+                for tx in open_transactions
+            ]
         )
 
     @classmethod
@@ -18,9 +22,7 @@ class Verification:
         for index, block in enumerate(blockchain.get_chain()):
             if index == 0:
                 continue
-            elif block.previous_hash != hash_util.hash_block(
-                blockchain.get_chain()[index - 1]
-            ):
+            elif block.previous_hash != hash_block(blockchain.get_chain()[index - 1]):
                 return False
             elif not cls.valid_proof(
                 block.transactions[:-1], block.previous_hash, block.proof
@@ -33,6 +35,6 @@ class Verification:
     def valid_proof(transactions, last_hash, proof):
         transactions_str = str([tx.to_ordered_dict() for tx in transactions])
         guess = (transactions_str + str(last_hash) + str(proof)).encode()
-        guess_hash = hash_util.hash_string_256(guess)
+        guess_hash = hash_string_256(guess)
 
         return guess_hash[0:2] == "00"

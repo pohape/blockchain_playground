@@ -1,6 +1,6 @@
 from blockchain import Blockchain
 from uuid import uuid4
-from verification import Verification
+from utility.verification import Verification
 
 
 class Node:
@@ -17,7 +17,7 @@ class Node:
             print("Please choose")
             print("1: Add a new transaction")
             print("2: Mine a new block")
-            print("3: Show participants")
+            print("3: Show blockchain elements")
             print("4: Verify transactions")
             print("q: Quit")
 

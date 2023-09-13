@@ -1,9 +1,9 @@
-from verification import Verification
+from utility.verification import Verification
 
 # from node import Node
 from transaction import Transaction
 from block import Block
-import hash_util
+from utility import hash_util
 import json
 import os
 
