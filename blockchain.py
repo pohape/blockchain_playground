@@ -1,6 +1,6 @@
 from utility.verification import Verification
+from wallet import Wallet
 
-# from node import Node
 from transaction import Transaction
 from block import Block
 from utility import hash_util
@@ -137,6 +137,8 @@ class Blockchain:
             return False
 
         transaction = Transaction(sender, recipient, signature, amount)
+        if not Wallet.verify_transaction(transaction):
+            return False
 
         if Verification.verify_transaction(transaction, self.get_balance):
             self.__open_transactions.append(transaction)
@@ -160,6 +162,11 @@ class Blockchain:
         )
 
         block = Block(len(self.__chain), hashed_block, copied_transactions, proof)
+
+        for tx in block.transactions:
+            if not Wallet.verify_transaction(tx):
+                return False
+
         self.__chain.append(block)
 
         self.__open_transactions = []

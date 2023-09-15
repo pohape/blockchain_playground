@@ -50,11 +50,27 @@ class Wallet:
         return private_key_str, public_key_str
 
     def sign_transaction(self, sender, recipient, amount):
-        imported_key = RSA.import_key(binascii.unhexlify(self.private_key))
-        signer = PKCS1_v1_5.new(imported_key)
+        rsa_private_key = RSA.import_key(binascii.unhexlify(self.private_key))
+        pkcs = PKCS1_v1_5.new(rsa_private_key)
 
         str_to_hash = str(sender) + str(recipient) + str(amount)
         hash_ = SHA256.new(str_to_hash.encode("utf8"))
-        signature = signer.sign(hash_)
+        signature = pkcs.sign(hash_)
 
         return binascii.hexlify(signature).decode("ascii")
+
+    def verify_transaction(transaction):
+        if transaction.sender == "MINING":
+            return True
+
+        rsa_public_key = RSA.import_key(binascii.unhexlify(transaction.sender))
+        pkcs = PKCS1_v1_5.new(rsa_public_key)
+
+        str_to_hash = (
+            str(transaction.sender)
+            + str(transaction.recipient)
+            + str(transaction.amount)
+        )
+        hash_ = SHA256.new(str_to_hash.encode("utf8"))
+
+        return pkcs.verify(hash_, binascii.unhexlify(transaction.signature))

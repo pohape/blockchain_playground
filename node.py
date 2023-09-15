@@ -44,7 +44,7 @@ class Node:
                     print("Transaction FAILED!")
             elif user_choice == "2":
                 if not self.blockchain.mine_block():
-                    print("Got no wallet?")
+                    print("Mine block failed. Got no wallet?")
             elif user_choice == "3":
                 self.print_blockchain_elements()
             elif user_choice == "4":
