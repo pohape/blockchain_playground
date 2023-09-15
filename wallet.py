@@ -1,5 +1,4 @@
 from Crypto.PublicKey import RSA
-import Crypto.Random
 import binascii
 
 
@@ -12,7 +11,27 @@ class Wallet:
         self.private_key, self.public_key = self.generate_keys()
 
     def load_keys(self):
-        pass
+        try:
+            with open("wallet.txt", mode="r") as f:
+                keys = f.readlines()
+                self.public_key = keys[0][:-1]
+                self.private_key = keys[1]
+        except (IOError, IndexError):
+            print("Wallet loading failed!")
+            quit()
+
+    def save_keys(self):
+        if not self.private_key or not self.public_key:
+            return False
+
+        try:
+            with open("wallet.txt", mode="w") as f:
+                f.write(self.public_key)
+                f.write("\n")
+                f.write(self.private_key)
+        except (IOError, IndexError):
+            print("Wallet saving failed!")
+            quit()
 
     def generate_keys(self):
         private_key = RSA.generate(1024)

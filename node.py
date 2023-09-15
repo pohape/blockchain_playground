@@ -7,7 +7,8 @@ from wallet import Wallet
 class Node:
     def __init__(self) -> None:
         self.wallet = Wallet()
-        self.blockchain = None
+        self.wallet.create_keys()
+        self.blockchain = Blockchain(self.wallet.public_key)
 
     def listen_for_input(self):
         while True:
@@ -23,7 +24,8 @@ class Node:
             print("3: Show blockchain elements")
             print("4: Verify transactions")
             print("5: Create wallet")
-            print("6: Load wallet")
+            print("6: Load wallet keys")
+            print("7: Save wallet keys")
             print("q: Quit")
 
             user_choice = self.get_user_choise()
@@ -53,7 +55,10 @@ class Node:
                 self.wallet.create_keys()
                 self.blockchain = Blockchain(self.wallet.public_key)
             elif user_choice == "6":
-                pass
+                self.wallet.load_keys()
+                self.blockchain = Blockchain(self.wallet.public_key)
+            elif user_choice == "7":
+                self.wallet.save_keys()
             elif user_choice == "q":
                 break
             else:
