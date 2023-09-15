@@ -32,11 +32,14 @@ class Node:
 
             if user_choice == "1":
                 recipient, amount = self.get_transaction_value()
+                signature = self.wallet.sign_transaction(
+                    self.wallet.public_key, recipient, amount
+                )
 
                 if self.blockchain.add_transaction(
-                    recipient, self.wallet.public_key, amount=amount
+                    recipient, self.wallet.public_key, signature, amount
                 ):
-                    print("Transaction completed!")
+                    print("Transaction added!")
                 else:
                     print("Transaction FAILED!")
             elif user_choice == "2":

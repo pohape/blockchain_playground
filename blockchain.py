@@ -41,6 +41,7 @@ class Blockchain:
                         Transaction(
                             transaction_invalid["sender"],
                             transaction_invalid["recipient"],
+                            transaction_invalid["signature"],
                             transaction_invalid["amount"],
                         )
                     )
@@ -63,6 +64,7 @@ class Blockchain:
                     Transaction(
                         transaction_invalid["sender"],
                         transaction_invalid["recipient"],
+                        transaction_invalid["signature"],
                         transaction_invalid["amount"],
                     ),
                 )
@@ -130,11 +132,11 @@ class Blockchain:
 
         return self.__chain[-1]
 
-    def add_transaction(self, recipient, sender, amount=1.0):
+    def add_transaction(self, recipient, sender, signature, amount=1.0):
         if self.hosting_node == None:
             return False
 
-        transaction = Transaction(sender, recipient, amount)
+        transaction = Transaction(sender, recipient, signature, amount)
 
         if Verification.verify_transaction(transaction, self.get_balance):
             self.__open_transactions.append(transaction)
@@ -154,7 +156,7 @@ class Blockchain:
 
         copied_transactions = self.__open_transactions[:]
         copied_transactions.append(
-            Transaction("MINING", self.hosting_node, MINING_REWARD)
+            Transaction("MINING", self.hosting_node, "", MINING_REWARD)
         )
 
         block = Block(len(self.__chain), hashed_block, copied_transactions, proof)
