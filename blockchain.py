@@ -137,8 +137,6 @@ class Blockchain:
             return False
 
         transaction = Transaction(sender, recipient, signature, amount)
-        if not Wallet.verify_transaction(transaction):
-            return False
 
         if Verification.verify_transaction(transaction, self.get_balance):
             self.__open_transactions.append(transaction)
@@ -157,18 +155,20 @@ class Blockchain:
         proof = self.proof_of_work()
 
         copied_transactions = self.__open_transactions[:]
+
+        for tx in copied_transactions:
+            if not Wallet.verify_transaction(tx):
+                print("There is an invalid transaction: " + tx)
+
+                return False
+
         copied_transactions.append(
             Transaction("MINING", self.hosting_node, "", MINING_REWARD)
         )
 
         block = Block(len(self.__chain), hashed_block, copied_transactions, proof)
 
-        for tx in block.transactions:
-            if not Wallet.verify_transaction(tx):
-                return False
-
         self.__chain.append(block)
-
         self.__open_transactions = []
         self.save_data()
 

@@ -1,21 +1,22 @@
 from utility.hash_util import hash_string_256, hash_block
+from wallet import Wallet
 
 
 class Verification:
     @staticmethod
-    def verify_transaction(transaction, get_balance):
+    def verify_transaction(transaction, get_balance=None):
+        transaction_verification_result = Wallet.verify_transaction(transaction)
+
+        if get_balance is None:
+            return transaction_verification_result
+
         sender_balance = get_balance()
 
-        return sender_balance >= transaction.amount
+        return sender_balance >= transaction.amount and transaction_verification_result
 
     @staticmethod
-    def verify_transactions(open_transactions, get_balance):
-        return all(
-            [
-                Verification.verify_transaction(tx, get_balance)
-                for tx in open_transactions
-            ]
-        )
+    def verify_transactions(open_transactions):
+        return all([Verification.verify_transaction(tx) for tx in open_transactions])
 
     @classmethod
     def verify_chain(cls, blockchain):

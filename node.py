@@ -49,7 +49,7 @@ class Node:
                 self.print_blockchain_elements()
             elif user_choice == "4":
                 if Verification.verify_transactions(
-                    self.blockchain.get_open_transactions(), self.blockchain.get_balance
+                    self.blockchain.get_open_transactions()
                 ):
                     print("All transactions are valid")
                 else:
