@@ -148,7 +148,7 @@ class Blockchain:
 
     def mine_block(self):
         if self.hosting_node == None:
-            return False
+            return None
 
         last_block = self.__chain[-1]
         hashed_block = hash_util.hash_block(last_block)
@@ -158,9 +158,9 @@ class Blockchain:
 
         for tx in copied_transactions:
             if not Wallet.verify_transaction(tx):
-                print("There is an invalid transaction: " + tx)
+                # print("There is an invalid transaction: " + tx)
 
-                return False
+                return None
 
         copied_transactions.append(
             Transaction("MINING", self.hosting_node, "", MINING_REWARD)
@@ -172,4 +172,4 @@ class Blockchain:
         self.__open_transactions = []
         self.save_data()
 
-        return True
+        return block
