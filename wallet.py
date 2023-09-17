@@ -19,8 +19,9 @@ class Wallet:
                 self.public_key = keys[0][:-1]
                 self.private_key = keys[1]
         except (IOError, IndexError):
-            print("Wallet loading failed!")
-            quit()
+            return False
+
+        return True
 
     def save_keys(self):
         if not self.private_key or not self.public_key:

@@ -48,8 +48,33 @@ def create_keys():
         )
 
 
+@app.route("/wallet", methods=["GET"])
 def load_keys():
-    pass
+    if wallet.load_keys():
+        global blockchain
+        blockchain = Blockchain(wallet.public_key)
+
+        return (
+            jsonify(
+                {
+                    "message": "OK",
+                    "public_key": wallet.public_key,
+                    "private_key": wallet.private_key,
+                }
+            ),
+            201,
+        )
+    else:
+        return (
+            jsonify(
+                {
+                    "message": "Loading the keys failed",
+                    "public_key": None,
+                    "private_key": None,
+                }
+            ),
+            500,
+        )
 
 
 @app.route("/chain", methods=["GET"])
