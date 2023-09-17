@@ -9,13 +9,47 @@ app = Flask(__name__)
 CORS(app)
 
 wallet = Wallet()
-# wallet.create_keys()
 blockchain = Blockchain(wallet.public_key)
 
 
 @app.route("/", methods=["GET"])
 def get_ui():
     return "This works!"
+
+
+@app.route("/wallet", methods=["POST"])
+def create_keys():
+    wallet.create_keys()
+
+    if wallet.save_keys():
+        global blockchain
+        blockchain = Blockchain(wallet.public_key)
+
+        return (
+            jsonify(
+                {
+                    "message": "OK",
+                    "public_key": wallet.public_key,
+                    "private_key": wallet.private_key,
+                }
+            ),
+            201,
+        )
+    else:
+        return (
+            jsonify(
+                {
+                    "message": "Saving the keys failed",
+                    "public_key": None,
+                    "private_key": None,
+                }
+            ),
+            500,
+        )
+
+
+def load_keys():
+    pass
 
 
 @app.route("/chain", methods=["GET"])
@@ -39,34 +73,29 @@ def mine():
             tx.__dict__.copy() for tx in dict_block["transactions"]
         ]
 
-        result = (
-            json.dumps(
-                {
-                    "message": "Block added successfully",
-                    "block": dict_block,
-                    "wallet_set_up": wallet.public_key != None,
-                }
-            ),
-            200,
-        )
+        return {
+            "message": "Block added successfully",
+            "block": dict_block,
+            "wallet_set_up": wallet.public_key != None,
+        }
     else:
-        result = (
-            json.dumps(
-                {
-                    "message": "Adding a block failed",
-                    "block": None,
-                    "wallet_set_up": wallet.public_key != None,
-                }
-            ),
-            500,
-        )
-
-    return result
+        return {
+            "message": "Adding a block failed",
+            "block": None,
+            "wallet_set_up": wallet.public_key != None,
+        }
 
 
 @app.route("/mine", methods=["POST"])
 def api_mine():
-    return mine()
+    dictionary = mine()
+
+    if dictionary["block"] == None:
+        http_code = 500
+    else:
+        http_code = 200
+
+    return jsonify(dictionary), http_code
 
 
 if __name__ == "__main__":
