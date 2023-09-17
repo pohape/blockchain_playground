@@ -31,6 +31,7 @@ def create_keys():
                     "message": "OK",
                     "public_key": wallet.public_key,
                     "private_key": wallet.private_key,
+                    "funds": blockchain.get_balance(),
                 }
             ),
             201,
@@ -42,6 +43,7 @@ def create_keys():
                     "message": "Saving the keys failed",
                     "public_key": None,
                     "private_key": None,
+                    "funds": None,
                 }
             ),
             500,
@@ -60,6 +62,7 @@ def load_keys():
                     "message": "OK",
                     "public_key": wallet.public_key,
                     "private_key": wallet.private_key,
+                    "funds": blockchain.get_balance(),
                 }
             ),
             201,
@@ -71,6 +74,7 @@ def load_keys():
                     "message": "Loading the keys failed",
                     "public_key": None,
                     "private_key": None,
+                    "funds": None,
                 }
             ),
             500,
@@ -89,6 +93,34 @@ def api_get_chain():
     return jsonify(dict_block), 200
 
 
+@app.route("/balance", methods=["GET"])
+def balance():
+    balance = blockchain.get_balance()
+
+    if balance == None:
+        return (
+            jsonify(
+                {
+                    "funds": balance,
+                    "message": "Failed",
+                    "wallet_set_up": wallet.public_key != None,
+                }
+            ),
+            500,
+        )
+    else:
+        return (
+            jsonify(
+                {
+                    "funds": balance,
+                    "message": "OK",
+                    "wallet_set_up": wallet.public_key != None,
+                }
+            ),
+            200,
+        )
+
+
 def mine():
     block = blockchain.mine_block()
 
@@ -101,12 +133,14 @@ def mine():
         return {
             "message": "Block added successfully",
             "block": dict_block,
+            "funds": blockchain.get_balance(),
             "wallet_set_up": wallet.public_key != None,
         }
     else:
         return {
             "message": "Adding a block failed",
             "block": None,
+            "funds": None,
             "wallet_set_up": wallet.public_key != None,
         }
 
