@@ -156,7 +156,7 @@ def load_keys():
 
 
 @app.route("/chain", methods=["GET"])
-def api_get_chain():
+def get_chain():
     dict_chain = [block.__dict__.copy() for block in blockchain.get_chain()]
 
     for dict_block in dict_chain:
@@ -165,7 +165,7 @@ def api_get_chain():
         ]
 
     return (
-        Response(json.dumps(dict_block, indent=2), mimetype="application/json"),
+        Response(json.dumps(dict_chain, indent=2), mimetype="application/json"),
         200,
     )
 
@@ -192,17 +192,23 @@ def add_transaction():
     if blockchain.add_transaction(
         values["recipient"], wallet.public_key, signature, values["amount"]
     ):
-        return jsonify(
-            {
-                "message": "Success",
-                "transaction": {
-                    "sender": wallet.public_key,
-                    "recipient": values["recipient"],
-                    "amount": values["amount"],
-                    "signature": signature,
-                },
-                "funds": blockchain.get_balance(),
-            },
+        return (
+            Response(
+                json.dumps(
+                    {
+                        "message": "Success",
+                        "transaction": {
+                            "sender": wallet.public_key,
+                            "recipient": values["recipient"],
+                            "amount": values["amount"],
+                            "signature": signature,
+                        },
+                        "funds": blockchain.get_balance(),
+                    },
+                    indent=2,
+                ),
+                mimetype="application/json",
+            ),
             201,
         )
     else:
@@ -215,26 +221,33 @@ def balance():
 
     if balance == None:
         return (
-            jsonify(
-                {
-                    "funds": balance,
-                    "message": "Failed",
-                    "wallet_set_up": wallet.public_key != None,
-                }
+            Response(
+                json.dumps(
+                    {
+                        "funds": balance,
+                        "message": "Failed",
+                        "wallet_set_up": wallet.public_key != None,
+                    },
+                    indent=2,
+                ),
+                mimetype="application/json",
             ),
             500,
         )
-
     else:
         return (
-            jsonify(
-                {
-                    "funds": balance,
-                    "message": "OK",
-                    "wallet_set_up": wallet.public_key != None,
-                }
+            Response(
+                json.dumps(
+                    {
+                        "funds": balance,
+                        "message": "OK",
+                        "wallet_set_up": wallet.public_key != None,
+                    },
+                    indent=2,
+                ),
+                mimetype="application/json",
             ),
-            200,
+            500,
         )
 
 
@@ -271,7 +284,10 @@ def api_mine():
     else:
         http_code = 200
 
-    return jsonify(dictionary), http_code
+    return (
+        Response(json.dumps(dictionary, indent=2), mimetype="application/json"),
+        http_code,
+    )
 
 
 if __name__ == "__main__":
