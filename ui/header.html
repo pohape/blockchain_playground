@@ -1,0 +1,19 @@
+<h1>Manage your Blockchain</h1>
+<h2>Funds: {balance}</h2>
+<h2>Wallet public key:</h2>
+<textarea cols="150" rows="3">{public_key}</textarea>
+<form action="/wallet" method="POST">
+    <input type="submit" value="Create new Wallet">
+</form>
+<ul>
+    <li id="menu_load_wallet">
+        <a href='/load_wallet.html'>Load Wallet</a>
+    </li>
+    <li id="menu_chain">
+        <a href='/chain.html'>Blockchain blocks</a>
+    </li>
+    </li>
+    <li id="menu_open_transactions">
+        <a href='/'>Open transactions</a>
+    </li>
+</ul>
