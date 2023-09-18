@@ -16,6 +16,7 @@ class Blockchain:
         self.__open_transactions = []
         self.load_data()
         self.hosting_node = hosting_node_id
+        self.__peer_nodes = set()
 
     def get_chain(self):
         return self.__chain[:]
@@ -56,7 +57,7 @@ class Blockchain:
                     )
                 )
 
-            open_transactions_invalid = json.loads(file_content[1])
+            open_transactions_invalid = json.loads(file_content[1][:-1])
             self.__open_transactions = []
 
             for transaction_invalid in open_transactions_invalid:
@@ -68,6 +69,9 @@ class Blockchain:
                         transaction_invalid["amount"],
                     ),
                 )
+
+            peer_nodes = json.loads(file_content[2])
+            self.__peer_nodes = set(peer_nodes)
 
             return True
 
@@ -94,6 +98,8 @@ class Blockchain:
                 f.write(json.dumps(blockchain_dict))
                 f.write("\n")
                 f.write(json.dumps(open_transactions_dict))
+                f.write("\n")
+                f.write(json.dumps(list(self.__peer_nodes)))
         except IOError:
             print("Saving failed!")
             quit()
@@ -176,3 +182,14 @@ class Blockchain:
         self.save_data()
 
         return block
+
+    def add_peer_node(self, node):
+        self.__peer_nodes.add(node)
+        self.save_data()
+
+    def remove_peer_node(self, node):
+        self.__peer_nodes.discard(node)
+        self.save_data()
+
+    def get_peer_nodes(self):
+        return list(self.__peer_nodes)

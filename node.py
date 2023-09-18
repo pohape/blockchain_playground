@@ -300,5 +300,19 @@ def api_mine():
     )
 
 
+@app.route("/node", methods=["POST"])
+def add_node():
+    values = request.get_json()
+
+    if not values:
+        return jsonify({"message": "No data"}), 400
+    if "node" not in values:
+        return jsonify({"message": "No node data found"}), 400
+
+    blockchain.add_peer_node(values["node"])
+
+    return jsonify({"message": "OK", "nodes": blockchain.get_peer_nodes()}), 200
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
