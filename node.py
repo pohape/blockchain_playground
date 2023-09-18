@@ -194,12 +194,11 @@ def add_transaction():
     if not all(field in values for field in required_fileds):
         return jsonify({"message": "Required data is missing"}), 400
 
-    signature = wallet.sign_transaction(
-        wallet.public_key, values["recipient"], values["amount"]
-    )
+    amount = float(values["amount"])
+    signature = wallet.sign_transaction(wallet.public_key, values["recipient"], amount)
 
     error = blockchain.add_transaction(
-        values["recipient"], wallet.public_key, signature, values["amount"]
+        values["recipient"], wallet.public_key, signature, amount
     )
 
     if error == None:

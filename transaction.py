@@ -6,7 +6,7 @@ class Transaction(Printable):
     def __init__(self, sender, recipient, signature, amount):
         self.sender = sender
         self.recipient = recipient
-        self.amount = float(amount)
+        self.amount = amount
         self.signature = signature
 
     def to_ordered_dict(self):

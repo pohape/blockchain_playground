@@ -12,10 +12,7 @@ class Verification:
 
         sender_balance = get_balance()
 
-        return (
-            sender_balance >= float(transaction.amount)
-            and transaction_verification_result
-        )
+        return sender_balance >= transaction.amount and transaction_verification_result
 
     @staticmethod
     def verify_transactions(open_transactions):
