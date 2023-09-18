@@ -137,7 +137,7 @@ class Blockchain:
 
     def add_transaction(self, recipient, sender, signature, amount=1.0):
         if self.hosting_node == None:
-            return False
+            return "No hosting node"
 
         transaction = Transaction(sender, recipient, signature, amount)
 
@@ -145,9 +145,9 @@ class Blockchain:
             self.__open_transactions.append(transaction)
             self.save_data()
 
-            return True
+            return None
 
-        return False
+        return "Transaction verification failed, balance is " + str(self.get_balance())
 
     def mine_block(self):
         if self.hosting_node == None:

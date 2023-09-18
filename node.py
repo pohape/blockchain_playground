@@ -60,6 +60,12 @@ def blockchain_html():
     ), 200
 
 
+@app.route("/transaction.html", methods=["GET"])
+def transaction_html():
+    with open("ui/transaction.html", mode="r") as f:
+        return (html_get_header("transaction") + f.read()), 200
+
+
 @app.route("/load_wallet.html", methods=["GET"])
 def load_wallet_html():
     if wallet.load_keys():
@@ -175,7 +181,10 @@ def add_transaction():
     if wallet.public_key == None:
         return jsonify(response={"message": "No wallet set up"}), 400
 
-    values = request.get_json()
+    values = request.form.to_dict()
+
+    if len(values) == 0:
+        values = request.get_json()
 
     if not values:
         return jsonify({"messsage": "No data found"}), 400
@@ -189,9 +198,11 @@ def add_transaction():
         wallet.public_key, values["recipient"], values["amount"]
     )
 
-    if blockchain.add_transaction(
+    error = blockchain.add_transaction(
         values["recipient"], wallet.public_key, signature, values["amount"]
-    ):
+    )
+
+    if error == None:
         return (
             Response(
                 json.dumps(
@@ -212,7 +223,7 @@ def add_transaction():
             201,
         )
     else:
-        return jsonify({"message": "Failed"})
+        return jsonify({"message": error})
 
 
 @app.route("/balance", methods=["GET"])
