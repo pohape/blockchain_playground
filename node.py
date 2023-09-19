@@ -1,9 +1,10 @@
-from flask import Flask, jsonify, request, send_from_directory, Response
+from flask import Flask, jsonify, request, Response
 from flask_cors import CORS
 from blockchain import Blockchain
 from wallet import Wallet
 import json
 from bs4 import BeautifulSoup
+from argparse import ArgumentParser
 
 app = Flask(__name__)
 CORS(app)
@@ -351,4 +352,9 @@ def get_nodes():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    parser = ArgumentParser()
+    parser.add_argument("-p", "--port", default=5000)
+    port = parser.parse_args().port
+
+    print("Starting on a port: " + str(port))
+    app.run(host="0.0.0.0", port=port)
