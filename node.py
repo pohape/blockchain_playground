@@ -66,6 +66,24 @@ def transaction_html():
         return (html_get_header("transaction") + f.read()), 200
 
 
+@app.route("/network.html", methods=["GET"])
+def network_html():
+    with open("ui/network.html", mode="r") as f:
+        html = html_get_header("network") + f.read()
+
+    html += "<ol>"
+
+    for node in blockchain.get_peer_nodes():
+        html += "<li><b>" + node + "</b>"
+        html += (
+            "<form action='/node/"
+            + node
+            + "' method='POST'><input type='submit' value='Delete'></form></li>"
+        )
+
+    return html + "</ol>", 200
+
+
 @app.route("/load_wallet.html", methods=["GET"])
 def load_wallet_html():
     if wallet.load_keys():
@@ -302,7 +320,10 @@ def api_mine():
 
 @app.route("/node", methods=["POST"])
 def add_node():
-    values = request.get_json()
+    values = request.form.to_dict()
+
+    if len(values) == 0:
+        values = request.get_json()
 
     if not values:
         return jsonify({"message": "No data"}), 400
@@ -314,7 +335,7 @@ def add_node():
     return jsonify({"message": "OK", "nodes": blockchain.get_peer_nodes()}), 200
 
 
-@app.route("/node/<node_url>", methods=["DELETE"])
+@app.route("/node/<node_url>", methods=["DELETE", "POST"])
 def remove_node(node_url):
     if node_url == "" or node_url == None:
         return jsonify({"message": "No data"}), 400
