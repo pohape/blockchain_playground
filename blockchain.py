@@ -11,12 +11,13 @@ MINING_REWARD = 10
 
 
 class Blockchain:
-    def __init__(self, hosting_node_id) -> None:
+    def __init__(self, public_key, node_id) -> None:
         self.__chain = [Block(0, "", [], 100, 0)]
         self.__open_transactions = []
         self.__peer_nodes = set()
+        self.public_key = public_key
+        self.node_id = node_id
         self.load_data()
-        self.hosting_node = hosting_node_id
 
     def get_chain(self):
         return self.__chain[:]
@@ -25,12 +26,11 @@ class Blockchain:
         return self.__open_transactions[:]
 
     def load_data(self):
-        if not os.path.isfile("blockchain.txt"):
+        if not os.path.isfile("blockchain-{}.txt".format(self.node_id)):
             return False
 
-        with open("blockchain.txt", mode="r") as f:
+        with open("blockchain-{}.txt".format(self.node_id), mode="r") as f:
             file_content = f.readlines()
-
             blockchain_invalid = json.loads(file_content[0][:-1])
             self.__chain = []
 
@@ -94,7 +94,7 @@ class Blockchain:
             open_transactions_dict.append(transaction.__dict__.copy())
 
         try:
-            with open("blockchain.txt", mode="w") as f:
+            with open("blockchain-{}.txt".format(self.node_id), mode="w") as f:
                 f.write(json.dumps(blockchain_dict))
                 f.write("\n")
                 f.write(json.dumps(open_transactions_dict))
@@ -115,12 +115,12 @@ class Blockchain:
         return proof
 
     def get_balance(self):
-        if self.hosting_node == None:
+        if self.public_key == None:
             return None
 
         amount_sent = 0
         amount_received = 0
-        participant = self.hosting_node
+        participant = self.public_key
 
         for block in self.__chain:
             for transaction in block.transactions:
@@ -142,8 +142,8 @@ class Blockchain:
         return self.__chain[-1]
 
     def add_transaction(self, recipient, sender, signature, amount=1.0):
-        if self.hosting_node == None:
-            return "No hosting node"
+        if self.public_key == None:
+            return "No public key"
 
         transaction = Transaction(sender, recipient, signature, amount)
 
@@ -156,7 +156,7 @@ class Blockchain:
         return "Transaction verification failed, balance is " + str(self.get_balance())
 
     def mine_block(self):
-        if self.hosting_node == None:
+        if self.public_key == None:
             return None
 
         last_block = self.__chain[-1]
@@ -172,7 +172,7 @@ class Blockchain:
                 return None
 
         copied_transactions.append(
-            Transaction("MINING", self.hosting_node, "", MINING_REWARD)
+            Transaction("MINING", self.public_key, "", MINING_REWARD)
         )
 
         block = Block(len(self.__chain), hashed_block, copied_transactions, proof)

@@ -9,9 +9,6 @@ from argparse import ArgumentParser
 app = Flask(__name__)
 CORS(app)
 
-wallet = Wallet()
-blockchain = Blockchain(wallet.public_key)
-
 
 def html_get_header_with_menu(current_page_name):
     with open("ui/header.html", mode="r") as f:
@@ -89,7 +86,7 @@ def network_html():
 def load_wallet_html():
     if wallet.load_keys():
         global blockchain
-        blockchain = Blockchain(wallet.public_key)
+        blockchain = Blockchain(wallet.public_key, port)
 
     return (
         html_get_header("load_wallet")
@@ -114,7 +111,7 @@ def create_keys():
 
     if wallet.save_keys():
         global blockchain
-        blockchain = Blockchain(wallet.public_key)
+        blockchain = Blockchain(wallet.public_key, port)
 
         return (
             jsonify(
@@ -145,7 +142,7 @@ def create_keys():
 def load_keys():
     if wallet.load_keys():
         global blockchain
-        blockchain = Blockchain(wallet.public_key)
+        blockchain = Blockchain(wallet.public_key, port)
 
         return (
             Response(
@@ -355,6 +352,9 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-p", "--port", default=5000)
     port = parser.parse_args().port
+
+    wallet = Wallet(port)
+    blockchain = Blockchain(wallet.public_key, port)
 
     print("Starting on a port: " + str(port))
     app.run(host="0.0.0.0", port=port)
