@@ -14,9 +14,9 @@ class Blockchain:
     def __init__(self, hosting_node_id) -> None:
         self.__chain = [Block(0, "", [], 100, 0)]
         self.__open_transactions = []
+        self.__peer_nodes = set()
         self.load_data()
         self.hosting_node = hosting_node_id
-        self.__peer_nodes = set()
 
     def get_chain(self):
         return self.__chain[:]
