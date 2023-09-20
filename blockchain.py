@@ -6,6 +6,7 @@ from block import Block
 from utility import hash_util
 import json
 import os
+import requests
 
 MINING_REWARD = 10
 
@@ -114,13 +115,17 @@ class Blockchain:
 
         return proof
 
-    def get_balance(self):
-        if self.public_key == None:
-            return None
+    def get_balance(self, sender=None):
+        if sender == None:
+            if self.public_key == None:
+                return None
+
+            participant = self.public_key
+        else:
+            participant = sender
 
         amount_sent = 0
         amount_received = 0
-        participant = self.public_key
 
         for block in self.__chain:
             for transaction in block.transactions:
@@ -141,7 +146,9 @@ class Blockchain:
 
         return self.__chain[-1]
 
-    def add_transaction(self, recipient, sender, signature, amount=1.0):
+    def add_transaction(
+        self, recipient, sender, signature, amount=1.0, is_receiving_broadcast=False
+    ):
         if self.public_key == None:
             return "No public key"
 
@@ -151,6 +158,26 @@ class Blockchain:
             self.__open_transactions.append(transaction)
             self.save_data()
 
+            if not is_receiving_broadcast:
+                for node in self.__peer_nodes:
+                    try:
+                        response = requests.post(
+                            "http://{}/boradcast-transaction".format(node),
+                            json={
+                                "sender": sender,
+                                "recipient": recipient,
+                                "amount": amount,
+                                "signature": signature,
+                            },
+                        )
+
+                        if response.status_code == 400 or response.status_code == 500:
+                            return (
+                                "Transaction decline with status "
+                                + response.status_code
+                            )
+                    except requests.exceptions.ConnectionError:
+                        continue
             return None
 
         return "Transaction verification failed, balance is " + str(self.get_balance())

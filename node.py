@@ -348,6 +348,42 @@ def get_nodes():
     return jsonify({"nodes": blockchain.get_peer_nodes()}), 200
 
 
+@app.route("/broadcast-transaction", methods=["POST"])
+def broadcast_transaction():
+    values = request.get_json()
+
+    if not values:
+        return jsonify({"message": "No data found"}), 400
+
+    if not all(key in values for key in ["sender", "recipient", "amount", "signature"]):
+        return jsonify({"message": "Some data is missing"})
+
+    error = blockchain.add_transaction(
+        sender=values["sender"],
+        recipient=values["recipient"],
+        amount=values["amount"],
+        signature=values["signature"],
+    )
+
+    if error == None:
+        return (
+            jsonify(
+                {
+                    "message": "OK",
+                    "transaction": {
+                        "sender": wallet.public_key,
+                        "recipient": values["recipient"],
+                        "amount": values["amount"],
+                        "signature": values["signature"],
+                    },
+                }
+            ),
+            201,
+        )
+    else:
+        return jsonify({"message": error}), 500
+
+
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-p", "--port", default=5000)
