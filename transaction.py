@@ -3,11 +3,11 @@ from utility.printable import Printable
 
 
 class Transaction(Printable):
-    def __init__(self, sender, recipient, signature, amount):
-        self.sender = sender
-        self.recipient = recipient
-        self.amount = amount
-        self.signature = signature
+    def __init__(self, transactionArray):
+        self.sender = transactionArray["sender"]
+        self.recipient = transactionArray["recipient"]
+        self.amount = transactionArray["amount"]
+        self.signature = transactionArray["signature"]
 
     def to_ordered_dict(self):
         return OrderedDict(

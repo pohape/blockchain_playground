@@ -5,6 +5,7 @@ from wallet import Wallet
 import json
 from bs4 import BeautifulSoup
 from argparse import ArgumentParser
+from block import Block
 
 app = Flask(__name__)
 CORS(app)
@@ -278,10 +279,17 @@ def balance():
 
 
 def mine():
-    block = blockchain.mine_block()
+    blockOrError = blockchain.mine_block()
 
-    if block:
-        dict_block = block.__dict__.copy()
+    if blockOrError is str:
+        return {
+            "message": blockOrError,
+            "block": None,
+            "funds": None,
+            "wallet_set_up": wallet.public_key != None,
+        }
+    else:
+        dict_block = blockOrError.__dict__.copy()
         dict_block["transactions"] = [
             tx.__dict__.copy() for tx in dict_block["transactions"]
         ]
@@ -290,13 +298,6 @@ def mine():
             "message": "Block added successfully",
             "block": dict_block,
             "funds": blockchain.get_balance(),
-            "wallet_set_up": wallet.public_key != None,
-        }
-    else:
-        return {
-            "message": "Adding a block failed",
-            "block": None,
-            "funds": None,
             "wallet_set_up": wallet.public_key != None,
         }
 
@@ -325,7 +326,7 @@ def add_node():
 
     if not values:
         return jsonify({"message": "No data"}), 400
-    if "node" not in values:
+    if "node" not in values or values["node"] == "":
         return jsonify({"message": "No node data found"}), 400
 
     blockchain.add_peer_node(values["node"])
@@ -382,6 +383,28 @@ def broadcast_transaction():
         )
     else:
         return jsonify({"message": error}), 500
+
+
+@app.route("/broadcast-block", methods=["POST"])
+def broadcast_block():
+    values = request.get_json()
+
+    if not values:
+        return jsonify({"message": "No data found"}), 400
+    elif "block" not in values:
+        return jsonify({"message": "Some data is missing"}), 400
+
+    block = values["block"]
+
+    if block["index"] == (blockchain.get_chain()[-1].index + 1):
+        if blockchain.add_block(block):
+            return jsonify({"message": "Block added"}), 201
+        else:
+            return jsonify({"message": "Block seems invalid"}), 500
+    elif block["index"] > blockchain.get_chain()[-1].index:
+        pass
+    else:
+        return jsonify({"message": "Blockchain seems to be shorter"}), 409
 
 
 if __name__ == "__main__":

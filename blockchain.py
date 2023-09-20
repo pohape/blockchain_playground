@@ -39,22 +39,14 @@ class Blockchain:
                 transactions = []
 
                 for transaction_invalid in block_invalid["transactions"]:
-                    transactions.append(
-                        Transaction(
-                            transaction_invalid["sender"],
-                            transaction_invalid["recipient"],
-                            transaction_invalid["signature"],
-                            transaction_invalid["amount"],
-                        )
-                    )
+                    transactions.append(Transaction(transaction_invalid))
 
                 self.__chain.append(
                     Block(
                         block_invalid["index"],
                         block_invalid["previous_hash"],
                         transactions,
-                        block_invalid["proof"]
-                        # block_invalid['timestamp']
+                        block_invalid["proof"],
                     )
                 )
 
@@ -146,6 +138,31 @@ class Blockchain:
 
         return self.__chain[-1]
 
+    def add_block(self, block):
+        transactions = [Transaction(tx) for tx in block["transactions"]]
+        proof_is_valid = Verification.valid_proof(
+            transactions[:-1], block["previous_hash"], block["proof"]
+        )
+
+        hashes_match = hash_util.hash_block(self.__chain[-1]) == block["previous_hash"]
+
+        if not proof_is_valid or not hashes_match:
+            return False
+
+        self.__chain.append(
+            Block(
+                block["index"],
+                block["previous_hash"],
+                transactions,
+                block["proof"],
+                block["time"],
+            )
+        )
+
+        self.save_data()
+
+        return True
+
     def add_transaction(
         self, recipient, sender, signature, amount=1.0, is_receiving_broadcast=False
     ):
@@ -184,7 +201,7 @@ class Blockchain:
 
     def mine_block(self):
         if self.public_key == None:
-            return None
+            return "Public key is empty"
 
         last_block = self.__chain[-1]
         hashed_block = hash_util.hash_block(last_block)
@@ -194,12 +211,17 @@ class Blockchain:
 
         for tx in copied_transactions:
             if not Wallet.verify_transaction(tx):
-                # print("There is an invalid transaction: " + tx)
-
-                return None
+                return "There is an invalid transaction: " + tx
 
         copied_transactions.append(
-            Transaction("MINING", self.public_key, "", MINING_REWARD)
+            Transaction(
+                {
+                    "sender": "MINING",
+                    "recipient": self.public_key,
+                    "signature": "",
+                    "amount": MINING_REWARD,
+                }
+            )
         )
 
         block = Block(len(self.__chain), hashed_block, copied_transactions, proof)
@@ -207,6 +229,21 @@ class Blockchain:
         self.__chain.append(block)
         self.__open_transactions = []
         self.save_data()
+
+        for node in self.__peer_nodes:
+            url = "http://{}/broadcast-block".format(node)
+            converted_block = block.__dict__.copy()
+            converted_block["transactions"] = [
+                tx.__dict__.copy() for tx in converted_block["transactions"]
+            ]
+
+            try:
+                response = requests.post(url, json={"block": converted_block})
+
+                if response.status_code == 400 or response.status_code == 500:
+                    print("Block declined, needs resolving")
+            except requests.exceptions.ConnectionError:
+                continue
 
         return block
 
