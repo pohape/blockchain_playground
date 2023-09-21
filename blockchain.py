@@ -16,6 +16,7 @@ class Blockchain:
         self.__chain = [Block(0, "", [], 100, 0)]
         self.__open_transactions = []
         self.__peer_nodes = set()
+        self.__peer_nodes.add("localhost:4001")
         self.public_key = public_key
         self.node_id = node_id
         self.load_data()
@@ -54,14 +55,7 @@ class Blockchain:
             self.__open_transactions = []
 
             for transaction_invalid in open_transactions_invalid:
-                self.__open_transactions.append(
-                    Transaction(
-                        transaction_invalid["sender"],
-                        transaction_invalid["recipient"],
-                        transaction_invalid["signature"],
-                        transaction_invalid["amount"],
-                    ),
-                )
+                self.__open_transactions.append(Transaction(transaction_invalid))
 
             peer_nodes = json.loads(file_content[2])
             self.__peer_nodes = set(peer_nodes)
@@ -166,12 +160,26 @@ class Blockchain:
     def add_transaction(
         self, recipient, sender, signature, amount=1.0, is_receiving_broadcast=False
     ):
-        if self.public_key == None:
-            return "No public key"
+        # if self.public_key == None:
+        #     return "No public key"
 
-        transaction = Transaction(sender, recipient, signature, amount)
+        transaction = Transaction(
+            {
+                "sender": sender,
+                "recipient": recipient,
+                "signature": signature,
+                "amount": amount,
+            }
+        )
 
-        if Verification.verify_transaction(transaction, self.get_balance):
+        if is_receiving_broadcast:
+            verification_result = Verification.verify_transaction(transaction)
+        else:
+            verification_result = Verification.verify_transaction(
+                transaction, self.get_balance
+            )
+
+        if verification_result:
             self.__open_transactions.append(transaction)
             self.save_data()
 
@@ -179,7 +187,7 @@ class Blockchain:
                 for node in self.__peer_nodes:
                     try:
                         response = requests.post(
-                            "http://{}/boradcast-transaction".format(node),
+                            "http://{}/broadcast-transaction".format(node),
                             json={
                                 "sender": sender,
                                 "recipient": recipient,
@@ -191,13 +199,15 @@ class Blockchain:
                         if response.status_code == 400 or response.status_code == 500:
                             return (
                                 "Transaction decline with status "
-                                + response.status_code
+                                + str(response.status_code)
+                                + " and error message: "
+                                + response.text
                             )
                     except requests.exceptions.ConnectionError:
                         continue
             return None
 
-        return "Transaction verification failed, balance is " + str(self.get_balance())
+        return "Transaction verification failed"
 
     def mine_block(self):
         if self.public_key == None:

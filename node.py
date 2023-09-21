@@ -364,6 +364,7 @@ def broadcast_transaction():
         recipient=values["recipient"],
         amount=values["amount"],
         signature=values["signature"],
+        is_receiving_broadcast=True,
     )
 
     if error == None:
