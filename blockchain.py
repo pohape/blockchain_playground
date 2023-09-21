@@ -153,6 +153,21 @@ class Blockchain:
             )
         )
 
+        stored_transactions = self.__open_transactions[:]
+
+        for incoming_transaction in block["transactions"]:
+            for open_transaction in stored_transactions:
+                if (
+                    open_transaction.sender == incoming_transaction["sender"]
+                    and open_transaction.recipient == incoming_transaction["recipient"]
+                    and open_transaction.amount == incoming_transaction["amount"]
+                    and open_transaction.signature == incoming_transaction["signature"]
+                ):
+                    try:
+                        self.__open_transactions.remove(open_transaction)
+                    except ValueError:
+                        print("Item was already removed: " + str(open_transaction))
+
         self.save_data()
 
         return True
