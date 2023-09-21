@@ -19,6 +19,7 @@ class Blockchain:
         self.__peer_nodes.add("localhost:4001")
         self.public_key = public_key
         self.node_id = node_id
+        self.resolve_conflicts = False
         self.load_data()
 
     def get_chain(self):
@@ -267,6 +268,8 @@ class Blockchain:
 
                 if response.status_code == 400 or response.status_code == 500:
                     print("Block declined, needs resolving")
+                elif response.status_code == 409:
+                    self.resolve_conflicts = True
             except requests.exceptions.ConnectionError:
                 continue
 

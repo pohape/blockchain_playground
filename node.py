@@ -304,6 +304,9 @@ def mine():
 
 @app.route("/mine", methods=["POST"])
 def api_mine():
+    if blockchain.resolve_conflicts:
+        return jsonify({"message": "Resolve conflicts first!"})
+
     dictionary = mine()
 
     if dictionary["block"] == None:
@@ -401,9 +404,16 @@ def broadcast_block():
         if blockchain.add_block(block):
             return jsonify({"message": "Block added"}), 201
         else:
-            return jsonify({"message": "Block seems invalid"}), 500
+            return jsonify({"message": "Block seems invalid"}), 409
     elif block["index"] > blockchain.get_chain()[-1].index:
-        pass
+        # индекс присланного блока больше чем индекс последнего блока в локальном блокчейне
+        blockchain.resolve_conflicts = True
+
+        return (
+            jsonify({"message": "Blockchain seems to be differ from local blockchain"}),
+            200,
+        )
+
     else:
         return jsonify({"message": "Blockchain seems to be shorter"}), 409
 
