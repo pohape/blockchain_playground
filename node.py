@@ -320,6 +320,16 @@ def api_mine():
     )
 
 
+@app.route("/resolve-conflicts", methods=["POST"])
+def resolve_conflicts():
+    replaced = blockchain.resolve()
+
+    if replaced:
+        return jsonify({"message": "Chain was replaced!"})
+    else:
+        return jsonify({"message": "Local chain kept!"})
+
+
 @app.route("/node", methods=["POST"])
 def add_node():
     values = request.form.to_dict()

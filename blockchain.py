@@ -275,6 +275,43 @@ class Blockchain:
 
         return block
 
+    def resolve(self):
+        replaced = False
+
+        for node in self.__peer_nodes:
+            try:
+                response = requests.get("http://{}/chain".format(node))
+                print(response.json())
+                node_chain = response.json()
+                node_chain = [
+                    Block(
+                        block["index"],
+                        block["previous_hash"],
+                        [Transaction(tx) for tx in block["transactions"]],
+                        block["proof"],
+                        block["time"],
+                    )
+                    for block in node_chain
+                ]
+
+                node_chain_len = len(node_chain)
+                local_chain_len = len(self.__chain)
+
+                if node_chain_len > local_chain_len and Verification.verify_chain(
+                    node_chain
+                ):
+                    self.__open_transactions = []
+                    self.__chain = node_chain
+                    replaced = True
+            except requests.exceptions.ConnectionError as e:
+                print(e)
+                continue
+
+        self.resolve_conflicts = False
+        self.save_data()
+
+        return replaced
+
     def add_peer_node(self, node):
         self.__peer_nodes.add(node)
         self.save_data()

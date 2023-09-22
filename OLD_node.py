@@ -69,7 +69,7 @@ class Node:
 
             print("Choice registered")
 
-            if not Verification.verify_chain(self.blockchain):
+            if not Verification.verify_chain(self.blockchain.get_chain()):
                 print("The Chain is invalid!")
                 break
 

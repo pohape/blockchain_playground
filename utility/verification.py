@@ -19,11 +19,11 @@ class Verification:
         return all([Verification.verify_transaction(tx) for tx in open_transactions])
 
     @classmethod
-    def verify_chain(cls, blockchain):
-        for index, block in enumerate(blockchain.get_chain()):
+    def verify_chain(cls, blockchainList):
+        for index, block in enumerate(blockchainList):
             if index == 0:
                 continue
-            elif block.previous_hash != hash_block(blockchain.get_chain()[index - 1]):
+            elif block.previous_hash != hash_block(blockchainList[index - 1]):
                 return False
             elif not cls.valid_proof(
                 block.transactions[:-1], block.previous_hash, block.proof
