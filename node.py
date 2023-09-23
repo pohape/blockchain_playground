@@ -5,7 +5,6 @@ from wallet import Wallet
 import json
 from bs4 import BeautifulSoup
 from argparse import ArgumentParser
-from block import Block
 
 app = Flask(__name__)
 CORS(app)
@@ -36,7 +35,7 @@ def html_get_header(current_page_name):
         .replace(
             "{public_key}",
             "wallet is not initialized"
-            if wallet.public_key == None
+            if wallet.public_key is None
             else wallet.public_key,
         )
         .replace("{balance}", str(blockchain.get_balance()))
@@ -47,7 +46,8 @@ def html_get_header(current_page_name):
 def get_ui():
     return (
         html_get_header("open_transactions")
-        + '<iframe src="/transactions" height="500" width="1000" title="Transactions"></iframe>'
+        + '<iframe src="/transactions" height="500"'
+        + ' width="1000" title="Transactions"></iframe>'
     ), 200
 
 
@@ -55,7 +55,8 @@ def get_ui():
 def blockchain_html():
     return (
         html_get_header("chain")
-        + '<iframe src="/chain" height="500" width="1000" title="Chain"></iframe>'
+        + '<iframe src="/chain" height="500" width="1000" title="Chain">'
+        + '</iframe>'
     ), 200
 
 
@@ -77,7 +78,8 @@ def network_html():
         html += (
             "<form action='/node/"
             + node
-            + "' method='POST'><input type='submit' value='Delete'></form></li>"
+            + "' method='POST'><input type='submit' value='Delete'>"
+            + "</form></li>"
         )
 
     return html + "</ol>", 200
@@ -91,7 +93,8 @@ def load_wallet_html():
 
     return (
         html_get_header("load_wallet")
-        + '<iframe src="/wallet" height="500" width="1000" title="Load Wallet"></iframe>'
+        + '<iframe src="/wallet" height="500" width="1000"'
+        + ' title="Load Wallet"></iframe>'
     ), 200
 
 
@@ -101,7 +104,8 @@ def open_transactions():
     dict_transactions = [tx.__dict__ for tx in transactions]
 
     return (
-        Response(json.dumps(dict_transactions, indent=2), mimetype="application/json"),
+        Response(json.dumps(dict_transactions, indent=2),
+                 mimetype="application/json"),
         200,
     )
 
@@ -188,14 +192,15 @@ def get_chain():
         ]
 
     return (
-        Response(json.dumps(dict_chain, indent=2), mimetype="application/json"),
+        Response(json.dumps(dict_chain, indent=2),
+                 mimetype="application/json"),
         200,
     )
 
 
 @app.route("/add_transaction", methods=["POST"])
 def add_transaction():
-    if wallet.public_key == None:
+    if wallet.public_key is None:
         return jsonify(response={"message": "No wallet set up"}), 400
 
     values = request.form.to_dict()
@@ -212,13 +217,14 @@ def add_transaction():
         return jsonify({"message": "Required data is missing"}), 400
 
     amount = float(values["amount"])
-    signature = wallet.sign_transaction(wallet.public_key, values["recipient"], amount)
+    signature = wallet.sign_transaction(
+        wallet.public_key, values["recipient"], amount)
 
     error = blockchain.add_transaction(
         values["recipient"], wallet.public_key, signature, amount
     )
 
-    if error == None:
+    if error is None:
         return (
             Response(
                 json.dumps(
@@ -246,14 +252,14 @@ def add_transaction():
 def balance():
     balance = blockchain.get_balance()
 
-    if balance == None:
+    if balance is None:
         return (
             Response(
                 json.dumps(
                     {
                         "funds": balance,
                         "message": "Failed",
-                        "wallet_set_up": wallet.public_key != None,
+                        "wallet_set_up": wallet.public_key is not None,
                     },
                     indent=2,
                 ),
@@ -268,7 +274,7 @@ def balance():
                     {
                         "funds": balance,
                         "message": "OK",
-                        "wallet_set_up": wallet.public_key != None,
+                        "wallet_set_up": wallet.public_key is not None,
                     },
                     indent=2,
                 ),
@@ -286,7 +292,7 @@ def mine():
             "message": blockOrError,
             "block": None,
             "funds": None,
-            "wallet_set_up": wallet.public_key != None,
+            "wallet_set_up": wallet.public_key is not None,
         }
     else:
         dict_block = blockOrError.__dict__.copy()
@@ -298,7 +304,7 @@ def mine():
             "message": "Block added successfully",
             "block": dict_block,
             "funds": blockchain.get_balance(),
-            "wallet_set_up": wallet.public_key != None,
+            "wallet_set_up": wallet.public_key is not None,
         }
 
 
@@ -309,13 +315,14 @@ def api_mine():
 
     dictionary = mine()
 
-    if dictionary["block"] == None:
+    if dictionary["block"] is None:
         http_code = 500
     else:
         http_code = 200
 
     return (
-        Response(json.dumps(dictionary, indent=2), mimetype="application/json"),
+        Response(json.dumps(dictionary, indent=2),
+                 mimetype="application/json"),
         http_code,
     )
 
@@ -344,17 +351,23 @@ def add_node():
 
     blockchain.add_peer_node(values["node"])
 
-    return jsonify({"message": "OK", "nodes": blockchain.get_peer_nodes()}), 200
+    return jsonify({
+        "message": "OK",
+        "nodes": blockchain.get_peer_nodes()
+    }), 200
 
 
 @app.route("/node/<node_url>", methods=["DELETE", "POST"])
 def remove_node(node_url):
-    if node_url == "" or node_url == None:
+    if node_url == "" or node_url is None:
         return jsonify({"message": "No data"}), 400
 
     blockchain.remove_peer_node(node_url)
 
-    return jsonify({"message": "OK", "nodes": blockchain.get_peer_nodes()}), 200
+    return jsonify({
+        "message": "OK",
+        "nodes": blockchain.get_peer_nodes()
+    }), 200
 
 
 @app.route("/nodes", methods=["GET"])
@@ -369,7 +382,8 @@ def broadcast_transaction():
     if not values:
         return jsonify({"message": "No data found"}), 400
 
-    if not all(key in values for key in ["sender", "recipient", "amount", "signature"]):
+    if not all(key in values for key in
+               ["sender", "recipient", "amount", "signature"]):
         return jsonify({"message": "Some data is missing"})
 
     error = blockchain.add_transaction(
@@ -380,7 +394,7 @@ def broadcast_transaction():
         is_receiving_broadcast=True,
     )
 
-    if error == None:
+    if error is None:
         return (
             jsonify(
                 {
@@ -416,13 +430,13 @@ def broadcast_block():
         else:
             return jsonify({"message": "Block seems invalid"}), 409
     elif block["index"] > blockchain.get_chain()[-1].index:
-        # индекс присланного блока больше чем индекс последнего блока в локальном блокчейне
+        # индекс присланного блока больше чем индекс последнего блока
+        # в локальном блокчейне
         blockchain.resolve_conflicts = True
 
-        return (
-            jsonify({"message": "Blockchain seems to be differ from local blockchain"}),
-            200,
-        )
+        return jsonify({
+            "message": "Blockchain seems to be differ from local blockchain"
+        }), 200
 
     else:
         return jsonify({"message": "Blockchain seems to be shorter"}), 409

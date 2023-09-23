@@ -5,18 +5,20 @@ from wallet import Wallet
 class Verification:
     @staticmethod
     def verify_transaction(transaction, get_balance=None):
-        transaction_verification_result = Wallet.verify_transaction(transaction)
+        transaction_verif_res = Wallet.verify_transaction(
+            transaction
+        )
 
         if get_balance is None:
-            return transaction_verification_result
+            return transaction_verif_res
 
         sender_balance = get_balance()
 
-        return sender_balance >= transaction.amount and transaction_verification_result
+        return sender_balance >= transaction.amount and transaction_verif_res
 
     @staticmethod
-    def verify_transactions(open_transactions):
-        return all([Verification.verify_transaction(tx) for tx in open_transactions])
+    def verify_transactions(open_trxs):
+        return all([Verification.verify_transaction(tx) for tx in open_trxs])
 
     @classmethod
     def verify_chain(cls, blockchainList):
