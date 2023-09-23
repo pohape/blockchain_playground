@@ -281,7 +281,6 @@ class Blockchain:
         for node in self.__peer_nodes:
             try:
                 response = requests.get("http://{}/chain".format(node))
-                print(response.json())
                 node_chain = response.json()
                 node_chain = [
                     Block(
