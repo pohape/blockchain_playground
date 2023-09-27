@@ -1,4 +1,4 @@
-Just a small blockchain project for fun to better understand how a blockchain technology works.
+Just a small blockchain project for fun to better understand how Blockchain technology works.
 You can run your node:
 ```
 python node.py --port=5000
